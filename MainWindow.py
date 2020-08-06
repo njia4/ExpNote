@@ -1,0 +1,248 @@
+#!/usr/bin/env python
+
+import sys, time, glob, shutil, math, pickle
+from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QMdiSubWindow, QTextEdit, QShortcut, QFileDialog
+from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
+from PySide2.QtCore import QThread
+from PySide2.QtGui import QKeySequence
+from ui_MainWindow import Ui_MainWindow
+
+from DataTable import DataTable
+from AnalysisParameter import Parameter
+from MPLCanvas import MplCanvas
+from NewExpDialog import NewExpDialog
+from Experiment import Experiment, load_exp
+from WorkerThread import worker
+from config import *
+from utilities import *
+
+sys.path.append(JPAC_DIR)
+
+# Signal class to call the add_run function in the main thread. 
+# Direct calling in the thread loop will trigger cellChanged signal and do strange stuff. 
+# Since the singal and add_run() are ran in different thread. 
+class NewRunSignal(QObject):
+    result = Signal(object)
+
+class FileThread(QThread):
+    def __init__(self, exp, gui):
+        QThread.__init__(self)
+        self.exp = exp
+        self.gui = gui
+        self.run_flg = True
+
+        self.signals = NewRunSignal()
+
+    def __del__(self):
+        self.wait()
+
+    def set_experiment(self, exp):
+        self.exp = exp
+
+    def abort(self):
+        console_print('File Thread', "Stopping!")
+        self.run_flg = False
+
+    def run(self):
+        while self.run_flg:
+            time.sleep(FILECHECK_FREQUENCY)
+        
+            # data_input_dir = generate_dir(DATA_INPUT_FOLDER_NAME)
+            data_input_dir = DATA_INPUT_FOLDER_NAME
+            if not os.path.exists(data_input_dir):
+              console_print('File Thread', '"{}" does not exist!'.format(DATA_INPUT_FOLDER_NAME), 'error')
+              continue
+
+            file_format = os.path.join(data_input_dir, "*."+FMT_DATAFILE)
+            files = glob.glob(file_format)
+            # files = sorted(files, key=lambda x: os.path.split) # TODO: SORT
+
+            if len(files) > 0:
+              for f in files:
+                  # Move file
+                  file_name = os.path.split(f)[-1]
+                  src = f
+                  dst_dir = os.path.join(generate_dir(self.exp.name, self.exp.dt), "Data")
+                  dst = os.path.join(dst_dir, file_name)
+                  if not os.path.exists(dst_dir):
+                      os.makedirs(dst_dir)
+                  shutil.move(src, dst)
+
+                  # Run analysis script
+                  console_print('File Thread', dst)
+                  data_id = self.exp.do_analyze(dst)
+                  if data_id != 0:
+                    self.signals.result.emit(data_id)
+
+class MainWindow(QMainWindow):
+    def __init__(self, exp):
+        super(MainWindow, self).__init__()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+        self.exp = exp
+
+        # Setup the windows
+        self.set_windows()
+
+        # Menu bar function binding
+        self.ui.actionNew.triggered.connect(self.OnNewExperiment)
+        self.ui.actionOpen.triggered.connect(self.OnOpenExperiment)
+        self.ui.actionSave.triggered.connect(self.OnSaveExperiment)
+        self.ui.actionTileWindows.triggered.connect(self.OnTileWindows)
+        self.ui.actionOpenWindows.triggered.connect(self.OnShowWindows)
+        self.ui.actionLoadScript.triggered.connect(self.OnLoadScript)
+        self.ui.actionReloadScript.triggered.connect(self.OnReloadScript)
+        # Keyboard shortcuts
+        self.full_screen = False
+        self.shortcut_full_screen = QShortcut(QKeySequence('F11'), self)
+        self.shortcut_full_screen.activated.connect(self.OnFullScreen)
+
+        # Start looking for data files
+        self.start_file_thread()
+
+        # self.showMaximized()
+        self.show()
+
+    def set_table_win(self):
+        # Add data table sub-window
+        self.data_table = DataTable(self.exp)
+        self.DataTableWindow = QMdiSubWindow()
+        self.DataTableWindow.setWidget(self.data_table)
+        self.ui.mdiArea.addSubWindow(self.DataTableWindow)
+        self.DataTableWindow.show()
+    def set_param_win(self):
+        # Add analysis parameters
+        self.analysis_parameters = Parameter(self.exp, self)
+        self.ParameterWindow = QMdiSubWindow()
+        self.ParameterWindow.setWidget(self.analysis_parameters)
+        self.ui.mdiArea.addSubWindow(self.ParameterWindow)
+        self.ParameterWindow.show()
+    def set_figs_win(self):
+        # Add plots
+        self.FigureWindows = {}
+        self.figs = {}
+        _figs = self.exp.get_figures()
+        for _name in _figs.keys():
+            self.figs[_name] = MplCanvas(_figs[_name])
+            self.FigureWindows[_name] = QMdiSubWindow()
+            self.FigureWindows[_name].setWidget(self.figs[_name])
+            self.FigureWindows[_name].resize(500, 400)
+            self.ui.mdiArea.addSubWindow(self.FigureWindows[_name])
+            self.FigureWindows[_name].show()
+    def set_windows(self):
+        self.set_table_win()
+        self.set_param_win()
+        self.set_figs_win()
+    def clear_windows(self, subwindows='all'):
+        if subwindows == 'all':
+            subwindows = self.ui.mdiArea.subWindowList()
+        for _win in subwindows:
+            self.ui.mdiArea.removeSubWindow(_win)
+    def refresh_windows(self):
+        self.clear_windows()
+        self.set_windows()
+
+    def start_file_thread(self):
+        # Start file thread
+        self.file_thread = FileThread(self.exp, self)
+        self.file_thread.signals.result.connect(self.add_result)
+        self.file_thread.start()
+    def stop_file_thread(self):
+        self.file_thread.abort()
+
+    @Slot()
+    def OnFullScreen(self):
+        if self.full_screen:
+            self.showMaximized()
+        else:
+            self.showFullScreen()
+        self.full_screen = not self.full_screen
+    
+    @Slot()
+    def OnTileWindows(self):
+        top_row_height = 400
+        # Position table window
+        _ract = QRect(0., 0., 800, top_row_height)
+        self.DataTableWindow.setGeometry(_ract)
+        self.DataTableWindow.move(0, 0)
+        # Positon parameter window
+        _ract = QRect(0., 0., 250, top_row_height)
+        self.ParameterWindow.setGeometry(_ract)
+        self.ParameterWindow.move(800, 0)
+        # Tile figure windwos
+        _win_size = self.ui.mdiArea.width()/4.
+        for ii, _name in enumerate(self.FigureWindows.keys()):
+            x_shift = ii%4
+            y_shift = math.floor(ii/4)
+            _rect = QRect(0., 0., _win_size, _win_size)
+            self.FigureWindows[_name].setGeometry(_rect)
+            self.FigureWindows[_name].move(_win_size*x_shift, _win_size*y_shift+top_row_height)
+    @Slot()
+    def OnShowWindows(self):
+        self.refresh_windows()
+
+    @Slot()
+    def OnNewExperiment(self):
+        self.OnSaveExperiment()
+        dlg = NewExpDialog()
+        if dlg.exec_():
+            _name = dlg.get_name()
+            _script = dlg.get_script()
+            self.exp = Experiment(name=_name, script=_script)
+            self.file_thread.set_experiment(self.exp)
+            self.clear_windows()
+            self.set_windows()
+    @Slot()
+    def OnOpenExperiment(self):
+        dlg = QFileDialog()
+        if dlg.exec_():
+            dirname = dlg.selectedFiles()[0]
+            exp = load_exp(dirname)
+            self.exp = exp
+            self.file_thread.set_experiment(self.exp)
+            self.clear_windows()
+            self.set_windows()
+    @Slot()
+    def OnSaveExperiment(self):
+        self.exp.save()
+
+    @Slot()
+    def OnLoadScript(self):
+        dlg = NewExpDialog(name=self.exp.name)
+        if dlg.exec_():
+            _script = dlg.get_script()
+            self.exp.set_analysis_script(_script)
+            self.clear_windows()
+            self.set_windows()
+    @Slot()
+    def OnReloadScript(self):
+        _script = os.path.join(self.exp.script_dir, self.exp.script_filename)
+        self.exp.set_analysis_script(_script)
+        self.clear_windows()
+        self.set_windows()
+
+    @Slot(int)
+    def add_result(self, data_id):
+        self.data_table.add_run(data_id)
+        self.update_figures()
+
+    @Slot()
+    def update_figures(self):
+        for _name in self.figs.keys():
+            _fig = self.figs[_name]
+            _fig.draw()
+
+    def load_analysis_script(self, filename):
+        self.exp.set_analysis_script(filename)
+        # self.ui.mdiArea.removeSubWindow(self.ParameterWindow)
+        self.analysis_parameters = Parameter(self.exp, self)
+        self.ParameterWindow.setWidget(self.analysis_parameters)
+        # self.ui.mdiArea.addSubWindow(self.ParameterWindow)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow(Experiment())
+    window.show()
+    sys.exit(app.exec_())
+    
