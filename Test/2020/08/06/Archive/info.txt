@@ -1,3 +1,0 @@
-Experiment Name: Archive
-Analysis script: 
-Description: 

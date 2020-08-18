@@ -1,3 +1,0 @@
-Experiment Name: Test1
-Analysis script: test.ipynb
-Description: 

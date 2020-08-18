@@ -1,3 +1,0 @@
-Experiment Name: zxcv
-Analysis script: test2.ipynb
-Description: 

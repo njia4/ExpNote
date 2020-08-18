@@ -5,14 +5,13 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QMdiSubWindow,
 from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
 from PySide2.QtCore import QThread
 from PySide2.QtGui import QKeySequence
-from ui_MainWindow import Ui_MainWindow
 
-from DataTable import DataTable
-from AnalysisParameter import Parameter
-from MPLCanvas import MplCanvas
-from NewExpDialog import NewExpDialog
-from Experiment import Experiment, load_exp
-from WorkerThread import worker
+from ui_MainWindow import Ui_MainWindow
+from Components.DataTable import DataTable
+from Components.AnalysisParameter import Parameter
+from Components.MPLCanvas import MplCanvas
+from Components.NewExpDialog import NewExpDialog
+from Experiment.Experiment import Experiment, load_exp
 from config import *
 from utilities import *
 
@@ -50,7 +49,7 @@ class FileThread(QThread):
             # data_input_dir = generate_dir(DATA_INPUT_FOLDER_NAME)
             data_input_dir = DATA_INPUT_FOLDER_NAME
             if not os.path.exists(data_input_dir):
-              console_print('File Thread', '"{}" does not exist!'.format(DATA_INPUT_FOLDER_NAME), 'error')
+              # console_print('File Thread', '"{}" does not exist!'.format(DATA_INPUT_FOLDER_NAME), 'error')
               continue
 
             file_format = os.path.join(data_input_dir, "*."+FMT_DATAFILE)
