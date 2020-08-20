@@ -29,7 +29,16 @@ class Figure:
 		namespace.update(self.exp.analysis_namespace) # TODO
 		namespace.update(self.exp.analysis_parameters)
 		namespace.update({'df': self.exp.df})
-		exec(self.plot_code, {'ax': self.ax}, namespace)
+		try: 
+			exec(self.plot_code, {'ax': self.ax}, namespace)
+		except Exception as e:
+			console_print('Analysis', 'Failed to run the analysis script.', method='error')
+			if hasattr(e, 'message'):
+				print(e.massage)
+			else:
+				print(e)
+			print(e)
+			return 0
 		return 1
 
 DF_INIT_DATA = {'Run Name': [np.nan], 'Valid': [1], 'Data Note': ''}
@@ -158,7 +167,12 @@ class Experiment:
 
 	def add_run(self, data_dict):
 		if self.data_id == len(self.df):
-			self.df = self.df.append(pd.Series(data_dict), ignore_index=True)
+			_df_header = self.df.columns.tolist()
+			_col_header = [_key for _key in data_dict.keys() if _key not in _df_header]
+			_col_header.remove('id')
+			self.df = self.df.append(data_dict, ignore_index=True)
+			if len(_col_header) > 0:
+				self.df = self.df[_df_header+_col_header]
 		else:
 			for key in data_dict.keys():
 				self.df.loc[self.data_id, key] = data_dict[key]
