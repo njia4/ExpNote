@@ -11,6 +11,7 @@ from Components.DataTable import DataTable
 from Components.AnalysisParameter import Parameter
 from Components.MPLCanvas import MplCanvas
 from Components.NewExpDialog import NewExpDialog
+from Components.ExpNotes import Notes
 from Experiment.Experiment import Experiment, load_exp
 from config import *
 from utilities import *
@@ -52,7 +53,7 @@ class FileThread(QThread):
               # console_print('File Thread', '"{}" does not exist!'.format(DATA_INPUT_FOLDER_NAME), 'error')
               continue
 
-            file_format = os.path.join(data_input_dir, "*."+FMT_DATAFILE)
+            file_format = os.path.join(data_input_dir, "*") # TODO: DECLARE FILE FORMAT TO LOOK AT
             files = glob.glob(file_format)
             # files = sorted(files, key=lambda x: os.path.split) # TODO: SORT
 
@@ -117,6 +118,12 @@ class MainWindow(QMainWindow):
         self.ParameterWindow.setWidget(self.analysis_parameters)
         self.ui.mdiArea.addSubWindow(self.ParameterWindow)
         self.ParameterWindow.show()
+        # Add note window
+        self.exp_notes = Notes(self.exp, self)
+        self.NotesWindow = QMdiSubWindow()
+        self.NotesWindow.setWidget(self.exp_notes)
+        self.ui.mdiArea.addSubWindow(self.NotesWindow)
+        self.NotesWindow.show()
     def set_figs_win(self):
         # Add plots
         self.FigureWindows = {}
@@ -169,6 +176,10 @@ class MainWindow(QMainWindow):
         _ract = QRect(0., 0., 250, top_row_height)
         self.ParameterWindow.setGeometry(_ract)
         self.ParameterWindow.move(800, 0)
+        # Position Note window
+        _ract = QRect(0., 0., 500, top_row_height)
+        self.NotesWindow.setGeometry(_ract)
+        self.NotesWindow.move(1050, 0)
         # Tile figure windwos
         _win_size = self.ui.mdiArea.width()/4.
         for ii, _name in enumerate(self.FigureWindows.keys()):
@@ -217,7 +228,9 @@ class MainWindow(QMainWindow):
     @Slot()
     def OnReloadScript(self):
         _script = os.path.join(self.exp.script_dir, self.exp.script_filename)
+        _params = self.exp.get_parameters() # Preserve the parameters when reload
         self.exp.set_analysis_script(_script)
+        self.exp.set_parameters(_params) # Set to current parameters
         self.clear_windows()
         self.set_windows()
 

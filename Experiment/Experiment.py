@@ -30,7 +30,7 @@ class Figure:
 		namespace.update(self.exp.analysis_parameters)
 		namespace.update({'df': self.exp.df})
 		try: 
-			exec(self.plot_code, {'ax': self.ax}, namespace)
+			exec(self.plot_code, {'fig': self.fig, 'ax': self.ax}, namespace)
 		except Exception as e:
 			console_print('Analysis', 'Failed to run the analysis script.', method='error')
 			if hasattr(e, 'message'):

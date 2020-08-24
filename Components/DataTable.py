@@ -13,6 +13,7 @@ class DataTable(QWidget):
 		super(DataTable, self).__init__()
 		self.ui = Ui_DataTable()
 		self.ui.setupUi(self)
+		self.setWindowTitle('Data Table')
 
 		self.exp = exp
 		self.col_header = list(self.exp.df.columns)
@@ -90,8 +91,8 @@ class DataTable(QWidget):
 
 			_row = data_id-1
 			_col = self.col_header.index(_key)
-
-			self.ui.tb_DataFrame.setItem(_row, _col, QTableWidgetItem(str(data[_key])))
+			_item = QTableWidgetItem(render_numeric_value(data[_key]))
+			self.ui.tb_DataFrame.setItem(_row, _col, _item)
 
 		self.ui.tb_DataFrame.blockSignals(False)
 
