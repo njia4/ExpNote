@@ -132,4 +132,4 @@ def render_numeric_value(value):
       return sgn+"{:.2f}e{:d}".format(num/(10**(3*exp)), int(3*exp))
 
   except:
-    return value
+    return str(value)

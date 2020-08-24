@@ -91,6 +91,7 @@ class DataTable(QWidget):
 
 			_row = data_id-1
 			_col = self.col_header.index(_key)
+			# _item = QTableWidgetItem(str(data[_key]))
 			_item = QTableWidgetItem(render_numeric_value(data[_key]))
 			self.ui.tb_DataFrame.setItem(_row, _col, _item)
 

@@ -169,7 +169,7 @@ class Experiment:
 		if self.data_id == len(self.df):
 			_df_header = self.df.columns.tolist()
 			_col_header = [_key for _key in data_dict.keys() if _key not in _df_header]
-			_col_header.remove('id')
+			# if 'id' in data_dict.keys(): _col_header.remove('id')
 			self.df = self.df.append(data_dict, ignore_index=True)
 			if len(_col_header) > 0:
 				self.df = self.df[_df_header+_col_header]
