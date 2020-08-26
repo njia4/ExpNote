@@ -38,7 +38,7 @@ def parse_ipynb(fname):
             if _code[0] == "### Modifiable Parameters ###\n":
                 for line in _cell['source'][1:]:
                     # m = re.match('(\w+)\s*=\s*([-]?[0-9\.]*[e]?[-]?[0-9]+)', line.strip())
-                    m = re.match('(\w+)\s*=\s*([\']?\w+[\']?)', line.strip())
+                    m = re.match('(\w+)\s*=\s*([\W\w]*)', line.strip())
                     if m != None:
                         key = m.group(1)
                         val = m.group(2)
