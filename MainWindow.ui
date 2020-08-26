@@ -91,6 +91,7 @@
     </property>
     <addaction name="actionLoadScript"/>
     <addaction name="actionReloadScript"/>
+    <addaction name="actionIdle"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -192,6 +193,11 @@
   <action name="actionOpenWindows">
    <property name="text">
     <string>Open Windows</string>
+   </property>
+  </action>
+  <action name="actionIdle">
+   <property name="text">
+    <string>Idle</string>
    </property>
   </action>
  </widget>

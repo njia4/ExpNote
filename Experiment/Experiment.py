@@ -32,7 +32,7 @@ class Figure:
 		try: 
 			exec(self.plot_code, {'fig': self.fig, 'ax': self.ax}, namespace)
 		except Exception as e:
-			console_print('Analysis', 'Failed to run the analysis script.', method='error')
+			console_print('Analysis', 'Failed to run the plotting script.', method='error')
 			if hasattr(e, 'message'):
 				print(e.massage)
 			else:
@@ -65,7 +65,6 @@ class Experiment:
 		self.analysis_namespace = {}
 
 		exp_dir = generate_dir(self.name, self.dt)
-		printYellow(exp_dir)
 		if not os.path.exists(exp_dir):
 			os.makedirs(exp_dir)
 
@@ -188,6 +187,7 @@ class Experiment:
 	def do_analyze(self, fname):
 		self.analysis_namespace['data_file'] = fname
 		self.analysis_namespace['result'] = pd.Series({'id': int(self.data_id), 'Run Name': os.path.split(fname)[-1]})
+		self.analysis_namespace['data_dir'] = os.path.join(generate_dir(self.name, self.dt), 'Data')
 		self.analysis_namespace.update(self.analysis_parameters)
 		try:
 			exec(self.analysis_script, self.analysis_namespace)

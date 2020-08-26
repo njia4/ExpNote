@@ -30,6 +30,7 @@ class FileThread(QThread):
         self.exp = exp
         self.gui = gui
         self.run_flg = True
+        self.save_flg = True
 
         self.signals = NewRunSignal()
 
@@ -38,6 +39,9 @@ class FileThread(QThread):
 
     def set_experiment(self, exp):
         self.exp = exp
+
+    def set_save(self, save):
+        self.save_flg = save
 
     def abort(self):
         console_print('File Thread', "Stopping!")
@@ -67,6 +71,10 @@ class FileThread(QThread):
                   if not os.path.exists(dst_dir):
                       os.makedirs(dst_dir)
                   shutil.move(src, dst)
+
+                  if not self.save_flg:
+                    shutil.remove(dst)
+                    continue
 
                   # Run analysis script
                   console_print('File Thread', dst)
