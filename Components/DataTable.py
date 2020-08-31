@@ -9,8 +9,9 @@ from utilities import *
 EMPTY_ROWS = 10
 
 class DataTable(QWidget):
-	def __init__(self, exp):
+	def __init__(self, exp, parent):
 		super(DataTable, self).__init__()
+		self.parent = parent
 		self.ui = Ui_DataTable()
 		self.ui.setupUi(self)
 		self.setWindowTitle('Data Table')
@@ -74,17 +75,16 @@ class DataTable(QWidget):
 		if action == actionAddColLeft:
 			self.OnNewVar(_col)
 			return
-
 	
 	def add_run(self, data_id):
-		self.ui.tb_DataFrame.blockSignals(True)
+		self.ui.tb_DataFrame.blockSignals(True) # Turn off edit event
 		data = self.exp.get_row(data_id)
 		for _key in data.keys():
 			if _key == 'id':
 				continue
 			if not _key in self.col_header:
 				_col_header_labels = self.get_col_header_labels()
-				_col_header_labels.append(_key) # Add new variable 
+				_col_header_labels.append(_key) # Add new variable
 				self._add_col()
 				self.ui.tb_DataFrame.setHorizontalHeaderLabels(_col_header_labels)
 				self.col_header = _col_header_labels
@@ -122,6 +122,7 @@ class DataTable(QWidget):
 
 		_val = self.ui.tb_DataFrame.item(row, col).text()
 		self._edit_cell(row, col, _val)
+		# self.parent.update_figures() # TODO: TOO SLOW
 
 		_empty_rows = self.ui.tb_DataFrame.rowCount() - row
 		if _empty_rows < EMPTY_ROWS:

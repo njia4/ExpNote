@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys, time, glob, shutil, math, pickle
+import threading
 from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QMdiSubWindow, QTextEdit, QShortcut, QFileDialog
 from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
 from PySide2.QtCore import QThread
@@ -48,13 +49,9 @@ class FileThread(QThread):
         self.run_flg = False
 
     def run(self):
-        while self.run_flg:
-            time.sleep(FILECHECK_FREQUENCY)
-        
-            # data_input_dir = generate_dir(DATA_INPUT_FOLDER_NAME)
-            data_input_dir = DATA_INPUT_FOLDER_NAME
+        data_input_dir = DATA_INPUT_FOLDER_NAME
+        while self.run_flg: 
             if not os.path.exists(data_input_dir):
-              # console_print('File Thread', '"{}" does not exist!'.format(DATA_INPUT_FOLDER_NAME), 'error')
               continue
 
             file_format = os.path.join(data_input_dir, "*") # TODO: DECLARE FILE FORMAT TO LOOK AT
@@ -77,10 +74,12 @@ class FileThread(QThread):
                     continue
 
                   # Run analysis script
-                  console_print('File Thread', dst)
+                  console_print('File Thread', "New data file: {}".format(file_name))
                   data_id = self.exp.do_analyze(dst)
                   if data_id != 0:
                     self.signals.result.emit(data_id)
+
+            time.sleep(FILECHECK_FREQUENCY)
 
 class MainWindow(QMainWindow):
     def __init__(self, exp):
@@ -114,7 +113,7 @@ class MainWindow(QMainWindow):
 
     def set_table_win(self):
         # Add data table sub-window
-        self.data_table = DataTable(self.exp)
+        self.data_table = DataTable(self.exp, self)
         self.DataTableWindow = QMdiSubWindow()
         self.DataTableWindow.setWidget(self.data_table)
         self.ui.mdiArea.addSubWindow(self.DataTableWindow)

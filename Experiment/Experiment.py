@@ -31,13 +31,13 @@ class Figure:
 		namespace.update({'df': self.exp.df})
 		try: 
 			exec(self.plot_code, {'fig': self.fig, 'ax': self.ax}, namespace)
+			self.fig.canvas.draw()
 		except Exception as e:
 			console_print('Analysis', 'Failed to run the plotting script.', method='error')
 			if hasattr(e, 'message'):
 				print(e.massage)
 			else:
 				print(e)
-			print(e)
 			return 0
 		return 1
 
@@ -198,13 +198,12 @@ class Experiment:
 				print(e.massage)
 			else:
 				print(e)
-			print(e)
 			return 0
 
 		# Complete analysis result with more meta-data
 		result = self.analysis_namespace['result']
-		self.add_run(result)
-		self.update_figure()
+		self.add_run(result) # Add result to the DataFrame
+		self.update_figure() # Update plots
 
 		return int(self.data_id)
 
