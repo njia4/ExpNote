@@ -8,14 +8,17 @@ from utilities import *
 EMPTY_ROWS = 10
 
 class NewExpDialog(QDialog):
-	def __init__(self, name=None):
+	def __init__(self, name=None, script=''):
 		super(NewExpDialog, self).__init__()
 		self.ui = Ui_Dialog()
 		self.ui.setupUi(self)
 
+		if script != '':
+			self.filename = script
+			self.ui.label_ExpScriptFile.setText(os.path.split(script)[-1])
+
 		if name != None:
 			self.ui.lineEdit.setText(name)
-			self.ui.lineEdit.setEnabled(False)
 		self.ui.label_ExpScriptFile.mousePressEvent = self.OnLoadScript
 
 	def get_name(self):

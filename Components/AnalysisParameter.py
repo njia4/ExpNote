@@ -26,11 +26,18 @@ class Parameter(QWidget):
 			_label.setText(_key)
 			var_layout.addWidget(_label, ii, 0)
 			
-			_val = QLineEdit()
-			_val.setObjectName(_key)
-			_val.setText(str(param_dict[_key]))
+			if type(param_dict[_key])==list:
+				_val = QComboBox()
+				_val.setObjectName(_key)
+				for _item in param_dict[_key]:
+					_val.addItem(_item)
+				_val.activated[str].connect(self.OnChangeSelection)	
+			else:
+				_val = QLineEdit()
+				_val.setObjectName(_key)
+				_val.setText(str(param_dict[_key]))
+				_val.editingFinished.connect(self.OnChangeParameter)
 			var_layout.addWidget(_val, ii, 1)
-			_val.editingFinished.connect(self.OnChangeParameter)
 
 		verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
@@ -41,6 +48,12 @@ class Parameter(QWidget):
 
 	def OnChangeParameter(self):
 		_param_dict = {self.sender().objectName(): self.sender().text()}
+		self.exp.set_parameters(_param_dict)
+		self.exp.update_figure()
+		self.parent.update_figures()
+
+	def OnChangeSelection(self, text):
+		_param_dict = {self.sender().objectName(): text}
 		self.exp.set_parameters(_param_dict)
 		self.exp.update_figure()
 		self.parent.update_figures()

@@ -43,7 +43,7 @@ def parse_ipynb(fname):
                         key = m.group(1)
                         val = m.group(2)
                         try:
-                            parameter_dict[key] = float(val)
+                            parameter_dict[key] = eval(val)
                         except:
                             parameter_dict[key] = val
                 parameter_code = ''.join(_cell['source'])

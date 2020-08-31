@@ -203,7 +203,12 @@ class MainWindow(QMainWindow):
     @Slot()
     def OnNewExperiment(self):
         self.OnSaveExperiment()
-        dlg = NewExpDialog()
+        _info = self.exp.get_exp_info()
+        _name = _info['name']
+        _script = os.path.join(_info['script_dir'], _info['script'])
+
+        dlg = NewExpDialog(name=_name, script=_script)
+
         if dlg.exec_():
             _name = dlg.get_name()
             _script = dlg.get_script()
@@ -227,9 +232,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def OnLoadScript(self):
-        dlg = NewExpDialog(name=self.exp.name)
+        dlg = QFileDialog()
         if dlg.exec_():
-            _script = dlg.get_script()
+            _script = dlg.selectedFiles()[0]
             self.exp.set_analysis_script(_script)
             self.clear_windows()
             self.set_windows()
