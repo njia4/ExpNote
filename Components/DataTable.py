@@ -122,13 +122,12 @@ class DataTable(QWidget):
 
 		_val = self.ui.tb_DataFrame.item(row, col).text()
 		self._edit_cell(row, col, _val)
-		# self.parent.update_figures() # TODO: TOO SLOW
+		self.parent.update_figures()
 
 		_empty_rows = self.ui.tb_DataFrame.rowCount() - row
 		if _empty_rows < EMPTY_ROWS:
 			for ii in range(EMPTY_ROWS-_empty_rows+1):
 				self._add_row()
-		
 		return
 	@Slot()
 	def OnCellSelected(self, row, col):
@@ -136,7 +135,6 @@ class DataTable(QWidget):
 		if col == 1:
 			_item.setFlags(Qt.ItemIsEditable)
 			_item.setFlags(Qt.ItemIsSelectable)
-			print('=')
 		return
 	@Slot()
 	def OnNewVar(self, col):

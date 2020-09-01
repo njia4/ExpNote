@@ -4,7 +4,7 @@ import sys, time, glob, shutil, math, pickle
 import threading
 from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QMdiSubWindow, QTextEdit, QShortcut, QFileDialog
 from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
-from PySide2.QtCore import QThread
+from PySide2.QtCore import QThread, QThreadPool, QRunnable
 from PySide2.QtGui import QKeySequence
 
 from ui_MainWindow import Ui_MainWindow
@@ -81,6 +81,16 @@ class FileThread(QThread):
 
             time.sleep(FILECHECK_FREQUENCY)
 
+class update_figure(QRunnable):
+    def __init__(self, exp):
+        super(update_figure, self).__init__()
+    
+    @Slot()
+    def run(self):
+        for _name in self.figs.keys():
+            _fig = self.exp.figs[_name]
+            _fig.draw()
+
 class MainWindow(QMainWindow):
     def __init__(self, exp):
         super(MainWindow, self).__init__()
@@ -88,6 +98,8 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self.exp = exp
+
+        self.threadpool = QThreadPool()
 
         # Setup the windows
         self.set_windows()

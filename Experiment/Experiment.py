@@ -31,7 +31,7 @@ class Figure:
 		namespace.update({'df': self.exp.df})
 		try: 
 			exec(self.plot_code, {'fig': self.fig, 'ax': self.ax}, namespace)
-			self.fig.canvas.draw()
+			# self.fig.canvas.draw()
 		except Exception as e:
 			console_print('Analysis', 'Failed to run the plotting script.', method='error')
 			if hasattr(e, 'message'):
