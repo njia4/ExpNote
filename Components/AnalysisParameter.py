@@ -19,6 +19,8 @@ class Parameter(QWidget):
 	def do_layout(self):
 		layout = QVBoxLayout()
 		var_layout = QGridLayout()
+		var_layout.setHorizontalSpacing(20)
+		var_layout.setVerticalSpacing(1)
 
 		param_dict = self.exp.get_parameters()
 		for ii, _key in enumerate(param_dict.keys()):

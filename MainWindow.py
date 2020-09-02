@@ -277,6 +277,7 @@ class MainWindow(QMainWindow):
         # self.ui.mdiArea.addSubWindow(self.ParameterWindow)
 
 if __name__ == "__main__":
+    print('\33]0;Experiment Note\a', end='', flush=True)
     app = QApplication(sys.argv)
     window = MainWindow(Experiment())
     window.show()
