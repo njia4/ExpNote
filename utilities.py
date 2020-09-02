@@ -118,6 +118,11 @@ def move_file(src, dst):
   shutil.move(src, dst)
 
 def render_numeric_value(value):
+  if type(value) == str:
+    return value
+  elif np.isnan(value):
+    return ''
+  
   try:
     num = float(value)
 
