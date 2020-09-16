@@ -124,6 +124,7 @@ class DataTable(QWidget):
 		self._edit_cell(row, col, _val)
 		self.parent.update_figures()
 
+		# Add empty rows at the end
 		_empty_rows = self.ui.tb_DataFrame.rowCount() - row
 		if _empty_rows < EMPTY_ROWS:
 			for ii in range(EMPTY_ROWS-_empty_rows+1):

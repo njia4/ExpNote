@@ -91,7 +91,6 @@
     </property>
     <addaction name="actionLoadScript"/>
     <addaction name="actionReloadScript"/>
-    <addaction name="actionIdle"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">

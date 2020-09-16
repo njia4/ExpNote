@@ -157,10 +157,6 @@ class Experiment:
 		self.save_info()
 		self.save_df()
 
-	def reset(self):
-		# Probably not necessary
-		pass
-
 	def add_figure(self, name, data_sets):
 		self.figs[name] = Figure(name, data_sets, self)
 

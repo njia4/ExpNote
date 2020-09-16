@@ -2,7 +2,7 @@
 
 import sys, time, glob, shutil, math, pickle
 import threading
-from PySide2.QtWidgets import QApplication, QMainWindow, QWidget, QMdiSubWindow, QTextEdit, QShortcut, QFileDialog
+from PySide2.QtWidgets import QPushButton, QApplication, QMainWindow, QWidget, QMdiSubWindow, QTextEdit, QShortcut, QFileDialog
 from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
 from PySide2.QtCore import QThread, QThreadPool, QRunnable
 from PySide2.QtGui import QKeySequence
@@ -31,7 +31,7 @@ class FileThread(QThread):
         self.exp = exp
         self.gui = gui
         self.run_flg = True
-        self.save_flg = True
+        self.save_flg = False
 
         self.signals = NewRunSignal()
 
@@ -43,6 +43,7 @@ class FileThread(QThread):
 
     def set_save(self, save):
         self.save_flg = save
+        console_print('File Thread', "Record {}".format(self.save_flg))
 
     def abort(self):
         console_print('File Thread', "Stopping!")
@@ -54,7 +55,7 @@ class FileThread(QThread):
             if not os.path.exists(data_input_dir):
               continue
 
-            file_format = os.path.join(data_input_dir, "*") # TODO: DECLARE FILE FORMAT TO LOOK AT
+            file_format = os.path.join(data_input_dir, "*") # TODO: DECLARE FILE FORMAT TO LOOK FOR
             files = glob.glob(file_format)
             # files = sorted(files, key=lambda x: os.path.split) # TODO: SORT
 
@@ -97,8 +98,13 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.exp = exp
+        # Setup status bar. Cannot do this in the Designer. 
+        self.btn_idle = QPushButton("Record", self)
+        self.btn_idle.setStyleSheet("background-color : red")
+        self.btn_idle.setCheckable(True)
+        self.ui.statusbar.addWidget(self.btn_idle)
 
+        self.exp = exp
         self.threadpool = QThreadPool()
 
         # Setup the windows
@@ -112,6 +118,8 @@ class MainWindow(QMainWindow):
         self.ui.actionOpenWindows.triggered.connect(self.OnShowWindows)
         self.ui.actionLoadScript.triggered.connect(self.OnLoadScript)
         self.ui.actionReloadScript.triggered.connect(self.OnReloadScript)
+        # Status bar
+        self.btn_idle.clicked.connect(self.OnRecord)
         # Keyboard shortcuts
         self.full_screen = False
         self.shortcut_full_screen = QShortcut(QKeySequence('F11'), self)
@@ -257,6 +265,16 @@ class MainWindow(QMainWindow):
         self.exp.set_parameters(_params) # Set to current parameters
         self.clear_windows()
         self.set_windows()
+
+    @Slot()
+    def OnRecord(self):
+        _status = self.btn_idle.isChecked()
+        self.file_thread.set_save(_status)
+        if _status:
+            self.btn_idle.setStyleSheet("background-color : green")
+        else:
+            self.btn_idle.setStyleSheet("background-color : red")
+        return 1
 
     @Slot(int)
     def add_result(self, data_id):
