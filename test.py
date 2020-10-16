@@ -1,5 +1,11 @@
-import re
+import pandas as pd
+from Experiment.Experiment import Experiment
+
+dat1 = Experiment()
+dat2 = Experiment()
+
+dat1.set_cell(0, 'a', 1)
 
 if __name__ == '__main__':
-	m = re.match('(\w+)\s*=\s*([\W\w]*)', "run_tag = 'asdf'".strip())
-	print(m.group(1))
+	print(dat1.df)
+	print(dat2.df)

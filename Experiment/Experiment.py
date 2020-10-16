@@ -52,7 +52,7 @@ class Experiment:
 		self.description = ''
 		self.dt = datetime.datetime.now()
 
-		self.df = df
+		self.df = df.copy() # Have to use copy() to get the namespace correct
 		self.columns = []
 		self.data_id = len(self.df)
 		self.figs = {}
@@ -94,13 +94,13 @@ class Experiment:
 		self.name = msg['name'] # TODO: DEAL WITH SAVING DIRECTORY
 		self.description = msg['description']
 	def set_cell(self, row, col, val):
-		# TODO: ENFORCE USING NUMERIC
 		console_print('Experiment', 'Update cell (row: {}, col: {}, val: {})'.format(row, col, val))
 		try:
 			_v = float(val)
 		except:
 			_v = val
-		self.df.loc[row, col] = _v
+		self.df.at[row, col] = _v
+
 		self.update_figure()
 	def set_parameters(self, data):
 		for key in data.keys():
@@ -130,7 +130,7 @@ class Experiment:
 		if "column_names" in self.analysis_namespace:
 			_cols = self.analysis_namespace['column_names']
 			
-
+		self.figs = {} # Clear old figures
 		for name, code in plots_code.items():
 			self.add_figure(name, code)
 	def set_figures(self):
