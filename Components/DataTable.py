@@ -1,12 +1,15 @@
 import sys, time
 from PySide2.QtWidgets import QAction, QMenu, QApplication, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QInputDialog, QShortcut
-from PySide2.QtCore import QFile, Slot, Qt
+from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal
 from PySide2.QtGui import QCursor
 from PySide2.QtGui import QKeySequence
 from .ui_DataTable import Ui_DataTable
 from utilities import *
 
-EMPTY_ROWS = 10
+EMPTY_ROWS = 30
+
+class PlotSignal(QObject):
+	plot = Signal()
 
 class DataTable(QWidget):
 	def __init__(self, exp, parent):
@@ -36,6 +39,8 @@ class DataTable(QWidget):
 		stylesheet = "::section{border-radius:14px;}"
 		self.ui.tb_DataFrame.horizontalHeader().setStyleSheet(stylesheet)
 		self.ui.tb_DataFrame.verticalHeader().setStyleSheet(stylesheet)
+
+		self.signals = PlotSignal() # Signal to tell main GUI to update figures. 
 
 	def _insert_row(self, row_index):
 		return
@@ -122,7 +127,8 @@ class DataTable(QWidget):
 
 		_val = self.ui.tb_DataFrame.item(row, col).text()
 		self._edit_cell(row, col, _val)
-		self.parent.update_figures()
+		# self.parent.update_figures()
+		self.signals.plot.emit()
 
 		# Add empty rows at the end
 		_empty_rows = self.ui.tb_DataFrame.rowCount() - row
@@ -167,6 +173,7 @@ class DataTable(QWidget):
 		for ii, _row in enumerate(_vals):
 			for jj, _col in enumerate(_row):
 				self.ui.tb_DataFrame.setItem(ii+_row_min, jj+_col_min, QTableWidgetItem(str(_vals[ii][jj])))
+		self.signals.plot.emit()
 	@Slot()
 	def OnCopy(self):
 		selected_index = self.ui.tb_DataFrame.selectedIndexes()

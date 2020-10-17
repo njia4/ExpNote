@@ -17,7 +17,7 @@ class Figure:
 		self.exp = experiment
 		self.name = name
 		self.plot_code = plot_code
-		self.fig = plt.figure(tight_layout=True, dpi=150)
+		self.fig = plt.figure(constrained_layout=True, dpi=100)
 		self.ax = self.fig.add_subplot(111)
 		self.lines = {}
 		self.id = 0
@@ -94,14 +94,15 @@ class Experiment:
 		self.name = msg['name'] # TODO: DEAL WITH SAVING DIRECTORY
 		self.description = msg['description']
 	def set_cell(self, row, col, val):
-		console_print('Experiment', 'Update cell (row: {}, col: {}, val: {})'.format(row, col, val))
+		# console_print('Experiment', 'Update cell (row: {}, col: {}, val: {})'.format(row, col, val))
 		try:
 			_v = float(val)
 		except:
 			_v = val
 		self.df.at[row, col] = _v
-
-		self.update_figure()
+		# Update figures is costy since it is replotting everything. 
+		# Will manually update plots from the GUI and use a different thread. 
+		# self.update_figure()
 	def set_parameters(self, data):
 		for key in data.keys():
 			try:
@@ -199,7 +200,7 @@ class Experiment:
 		# Complete analysis result with more meta-data
 		result = self.analysis_namespace['result']
 		self.add_run(result) # Add result to the DataFrame
-		self.update_figure() # Update plots
+		self.update_figure() # Update plots. This is probably ok since it is in the WorkerThread already. 
 
 		return int(self.data_id)
 

@@ -24,7 +24,6 @@ sys.path.append(JPAC_DIR)
 # Since the singal and add_run() are ran in different thread. 
 class NewRunSignal(QObject):
     result = Signal(object)
-
 class FileThread(QThread):
     def __init__(self, exp, gui):
         QThread.__init__(self)
@@ -82,15 +81,29 @@ class FileThread(QThread):
 
             time.sleep(FILECHECK_FREQUENCY)
 
-class update_figure(QRunnable):
-    def __init__(self, exp):
-        super(update_figure, self).__init__()
-    
-    @Slot()
+class RefreshPlotSignal(QObject):
+    refresh = Signal()
+class PlotThread(QThread):
+    def __init__(self, gui):
+        QThread.__init__(self)
+        self.run_flg = True
+        self.replot_flg = False
+        self.gui = gui
+        self.signals = RefreshPlotSignal()
+
+    def replot(self):
+        self.replot_flg = True
+
+    def abort(self):
+        self.run_flg = False
+
     def run(self):
-        for _name in self.figs.keys():
-            _fig = self.exp.figs[_name]
-            _fig.draw()
+        while self.run_flg:
+            if self.replot_flg:
+                self.gui.exp.update_figure()
+                self.signals.refresh.emit()
+                self.replot_flg = False
+            time.sleep(0.25)
 
 class MainWindow(QMainWindow):
     def __init__(self, exp):
@@ -127,6 +140,7 @@ class MainWindow(QMainWindow):
 
         # Start looking for data files
         self.start_file_thread()
+        self.start_plot_thread()
 
         # self.showMaximized()
         self.show()
@@ -134,6 +148,7 @@ class MainWindow(QMainWindow):
     def set_table_win(self):
         # Add data table sub-window
         self.data_table = DataTable(self.exp, self)
+        self.data_table.signals.plot.connect(self.replot)
         self.DataTableWindow = QMdiSubWindow()
         self.DataTableWindow.setWidget(self.data_table)
         self.ui.mdiArea.addSubWindow(self.DataTableWindow)
@@ -183,6 +198,16 @@ class MainWindow(QMainWindow):
         self.file_thread.start()
     def stop_file_thread(self):
         self.file_thread.abort()
+
+    def start_plot_thread(self):
+        self.plot_thread = PlotThread(self)
+        self.plot_thread.signals.refresh.connect(self.update_figures)
+        self.plot_thread.start()
+    def stop_plot_thread(self):
+        self.plot_thread.abort()
+    @Slot()
+    def replot(self):
+        self.plot_thread.replot()
 
     @Slot()
     def OnFullScreen(self):
@@ -282,10 +307,9 @@ class MainWindow(QMainWindow):
         self.update_figures()
 
     @Slot()
-    def update_figures(self):
+    def update_figures(self): # Refresh the GUI for new figures. 
         for _name in self.figs.keys():
-            _fig = self.figs[_name]
-            _fig.draw()
+            self.figs[_name].draw()
 
     def load_analysis_script(self, filename):
         self.exp.set_analysis_script(filename)
