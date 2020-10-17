@@ -1,6 +1,6 @@
 import sys
 from PySide2.QtCore import (QCoreApplication, QDate, QDateTime, QMetaObject,
-    QObject, QPoint, QRect, QSize, QTime, QUrl, Qt)
+    QObject, QPoint, QRect, QSize, QTime, QUrl, Qt, Signal)
 from PySide2.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QFontDatabase, QIcon, QKeySequence, QLinearGradient, QPalette, QPainter, 
     QPixmap, QRadialGradient)
@@ -8,11 +8,15 @@ from PySide2.QtWidgets import *
 from Experiment import Experiment
 from PySide2 import QtGui
 
+class PlotSignal(QObject):
+	plot = Signal()
+
 class Parameter(QWidget):
 	def __init__(self, exp, parent):
 		super(Parameter, self).__init__()
 		self.exp = exp
 		self.parent = parent
+		self.signals = PlotSignal()
 		self.setWindowTitle('Parameters')
 		self.do_layout()
 
@@ -51,8 +55,9 @@ class Parameter(QWidget):
 	def OnChangeParameter(self):
 		_param_dict = {self.sender().objectName(): self.sender().text()}
 		self.exp.set_parameters(_param_dict)
-		self.exp.update_figure()
-		self.parent.update_figures()
+		# self.exp.update_figure()
+		# self.parent.update_figures()
+		self.signals.plot.emit()
 
 	def OnChangeSelection(self, text):
 		_param_dict = {self.sender().objectName(): text}

@@ -103,9 +103,7 @@ class PlotThread(QThread):
                 self.gui.exp.update_figure()
                 self.signals.refresh.emit()
                 self.replot_flg = False
-
-                for _name in self.gui.figs.keys():
-                    self.gui.figs[_name].draw()
+                self.gui.update_figures()
             time.sleep(0.25)
 
 class MainWindow(QMainWindow):
@@ -159,6 +157,7 @@ class MainWindow(QMainWindow):
     def set_param_win(self):
         # Add analysis parameters
         self.analysis_parameters = Parameter(self.exp, self)
+        self.analysis_parameters.signals.plot.connect(self.replot)
         self.ParameterWindow = QMdiSubWindow()
         self.ParameterWindow.setWidget(self.analysis_parameters)
         self.ui.mdiArea.addSubWindow(self.ParameterWindow)
@@ -204,7 +203,6 @@ class MainWindow(QMainWindow):
 
     def start_plot_thread(self):
         self.plot_thread = PlotThread(self)
-        self.plot_thread.signals.refresh.connect(self.update_figures)
         self.plot_thread.start()
     def stop_plot_thread(self):
         self.plot_thread.abort()
@@ -307,12 +305,13 @@ class MainWindow(QMainWindow):
     @Slot(int)
     def add_result(self, data_id):
         self.data_table.add_run(data_id)
-        self.update_figures()
+        # self.update_figures()
+        self.replot()
 
     @Slot()
     def update_figures(self): # Refresh the GUI for new figures. 
-        # for _name in self.figs.keys():
-        #     self.figs[_name].draw()
+        for _name in self.figs.keys():
+            self.figs[_name].draw()
         return 1
 
     def load_analysis_script(self, filename):
