@@ -70,7 +70,7 @@ class FileThread(QThread):
                   shutil.move(src, dst)
 
                   if not self.save_flg:
-                    shutil.remove(dst)
+                    os.remove(dst)
                     continue
 
                   # Run analysis script
@@ -103,6 +103,9 @@ class PlotThread(QThread):
                 self.gui.exp.update_figure()
                 self.signals.refresh.emit()
                 self.replot_flg = False
+
+                for _name in self.gui.figs.keys():
+                    self.gui.figs[_name].draw()
             time.sleep(0.25)
 
 class MainWindow(QMainWindow):
@@ -308,8 +311,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def update_figures(self): # Refresh the GUI for new figures. 
-        for _name in self.figs.keys():
-            self.figs[_name].draw()
+        # for _name in self.figs.keys():
+        #     self.figs[_name].draw()
+        return 1
 
     def load_analysis_script(self, filename):
         self.exp.set_analysis_script(filename)

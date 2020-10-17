@@ -54,7 +54,8 @@ class DataTable(QWidget):
 		return self.ui.tb_DataFrame.columnCount()
 
 	def _edit_cell(self, row, col, val):
-		col = self.get_col_header_labels()[col]
+		# col = self.get_col_header_labels()[col]
+		col = self.col_header[col]
 		self.exp.set_cell(row, col, val)
 		return 1
 
