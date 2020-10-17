@@ -5,7 +5,7 @@ import threading
 from PySide2.QtWidgets import QPushButton, QApplication, QMainWindow, QWidget, QMdiSubWindow, QTextEdit, QShortcut, QFileDialog
 from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
 from PySide2.QtCore import QThread, QThreadPool, QRunnable
-from PySide2.QtGui import QKeySequence
+from PySide2.QtGui import QKeySequence, QIcon
 
 from ui_MainWindow import Ui_MainWindow
 from Components.DataTable import DataTable
@@ -111,6 +111,8 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.setWindowIcon(QIcon('icons/main.png'))
 
         # Setup status bar. Cannot do this in the Designer. 
         self.btn_idle = QPushButton("Record", self)
@@ -322,7 +324,18 @@ class MainWindow(QMainWindow):
         # self.ui.mdiArea.addSubWindow(self.ParameterWindow)
 
 if __name__ == "__main__":
-    print('\33]0;Experiment Note\a', end='', flush=True)
+    if os.name == 'nt':
+        from os import system
+        system("title "+"Experiment Note")
+    else:
+        print('\33]0;Experiment Note\a', end='', flush=True)
+
+    # These are few lines of magic code to not let the windows group the task bar icons
+    if os.name == 'nt':
+        import ctypes
+        myappid = u'fermi2.ExperimentControl.ExperimentNote.1.0' # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
     app = QApplication(sys.argv)
     window = MainWindow(Experiment())
     window.show()
