@@ -7,6 +7,7 @@ from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
 from PySide2.QtCore import QThread, QThreadPool, QRunnable
 from PySide2.QtGui import QKeySequence, QIcon
 
+# UI components
 from ui_MainWindow import Ui_MainWindow
 from Components.DataTable import DataTable
 from Components.AnalysisParameter import Parameter
@@ -99,11 +100,14 @@ class PlotThread(QThread):
 
     def run(self):
         while self.run_flg:
-            if self.replot_flg:
-                self.gui.exp.update_figure()
-                self.signals.refresh.emit()
-                self.replot_flg = False
-                self.gui.update_figures()
+            try:
+                if self.replot_flg:
+                    self.gui.exp.update_figure()
+                    self.signals.refresh.emit()
+                    self.replot_flg = False
+                    self.gui.update_figures()
+            except:
+                continue
             time.sleep(0.25)
 
 class MainWindow(QMainWindow):
@@ -124,7 +128,9 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool()
 
         # Setup the windows
+        self.showMaximized()
         self.set_windows()
+        self.OnTileWindows()
 
         # Menu bar function binding
         self.ui.actionNew.triggered.connect(self.OnNewExperiment)
@@ -186,6 +192,7 @@ class MainWindow(QMainWindow):
         self.set_table_win()
         self.set_param_win()
         self.set_figs_win()
+        self.OnTileWindows()
     def clear_windows(self, subwindows='all'):
         if subwindows == 'all':
             subwindows = self.ui.mdiArea.subWindowList()

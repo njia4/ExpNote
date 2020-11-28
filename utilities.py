@@ -108,7 +108,7 @@ def console_print(header, msg, method='normal'):
 def generate_dir(child_dir, dt='now'):
   if dt == 'now':
     dt = datetime.datetime.now()
-  dir_dt = dt.strftime('%Y/%m/%d')
+  dir_dt = dt.strftime('%Y\\%m\\%d')
   return os.path.join(DIR_DATA_PARENT, dir_dt, child_dir)
 
 def move_file(src, dst):

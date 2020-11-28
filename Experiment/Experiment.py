@@ -195,7 +195,7 @@ class Experiment:
 				print(e.massage)
 			else:
 				print(e)
-			return 0
+			# return 0
 
 		# Complete analysis result with more meta-data
 		result = self.analysis_namespace['result']
