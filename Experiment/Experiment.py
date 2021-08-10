@@ -176,6 +176,7 @@ class Experiment:
 		self.figs[name] = Figure(name, data_sets, self)
 
 	def add_run(self, data_dict):
+		# TODO: MAYBE NOT USING APPEND BUT RATHER CALL THE INDEX TO MAKE THINGS CONSISTENT
 		if self.data_id == len(self.df):
 			_df_header = self.df.columns.tolist()
 			_col_header = [_key for _key in data_dict.keys() if _key not in _df_header]

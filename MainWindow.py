@@ -308,6 +308,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def OnRecord(self):
+        # TODO: CHECK IF FILE THREAD HAS CRASHED. IF SO, CREATE A NEW ONE AND DELETE FILES IN THE FOLDER FIRST. 
         _status = self.btn_idle.isChecked()
         self.file_thread.set_save(_status)
         if _status:
