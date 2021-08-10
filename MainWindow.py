@@ -69,6 +69,10 @@ class FileThread(QThread):
                   dst = os.path.join(dst_dir, file_name)
                   if not os.path.exists(dst_dir):
                       os.makedirs(dst_dir)
+                  
+                  if not os.access(src, os.W_OK): # Check if other software has finish writing the file
+                    continue
+                  
                   shutil.move(src, dst)
 
                   if not self.save_flg:

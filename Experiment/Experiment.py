@@ -41,7 +41,7 @@ class Figure:
 			return 0
 		return 1
 
-DF_INIT_DATA = {'Run Name': [np.nan], 'Valid': [1], 'Data Note': ''}
+DF_INIT_DATA = {'id': [np.nan], 'Run Name': [np.nan], 'Valid': [1], 'Data Note': ''}
 DF_INIT_COLUMNS = ['Run Name', 'Valid', 'Data Note']
 EXP_DEFAULT_NAME = 'Archive'
 EXP_DEFAULT_DF = pd.DataFrame(columns=DF_INIT_DATA)
@@ -90,16 +90,30 @@ class Experiment:
 		console_print('Experiment', 'Send figures. ({} figures detected)'.format(len(self.figs)))
 		return self.figs
 
+	def add_col(self, col_index, name):
+		self.df.insert(col_index, name, pd.Series())
+
 	def set_exp_info(self, msg):
 		self.name = msg['name'] # TODO: DEAL WITH SAVING DIRECTORY
 		self.description = msg['description']
 	def set_cell(self, row, col, val):
 		# console_print('Experiment', 'Update cell (row: {}, col: {}, val: {})'.format(row, col, val))
+		
+		# Panda is using indexing instead of rwo number. If some variable is set before the data come in, 
+		# it will mess up the order. So append some empty rows before assigning
+		# TODO: MAYBE MAKE BETTER USE OF THE PANDA INDEXING SYSTEM. 
+		# FOR EXAMPLE DIRECTLY CALL AND SET USING THE INDEX AND SORT BEFORE SAVING?
+		if row >= len(self.df):
+			_counter = row-len(self.df)
+			for ii in range(_counter):
+				self.df = self.df.append(pd.Series(), ignore_index=True)
+
 		try:
 			_v = float(val)
 		except:
 			_v = val
 		self.df.at[row, col] = _v
+
 		# Update figures is costy since it is replotting everything. 
 		# Will manually update plots from the GUI and use a different thread. 
 		# self.update_figure()
@@ -210,6 +224,7 @@ def load_exp(filename):
 	with open(filename, 'r') as info_file:
 		exp_name   = info_file.readline().split(':')[-1].strip()
 		exp_script = info_file.readline().split(':')[-1].strip()
+		printYellow(exp_script)
 		exp_info   = ''.join(info_file.readlines()[1:])
 		print(exp_info)
 		try:

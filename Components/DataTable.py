@@ -24,7 +24,7 @@ class DataTable(QWidget):
 
 		self.backend_writing = False
 		
-		self.populate_tabel(self.exp.df)
+		self.populate_tabel(self.exp.df.drop(columns='id'))
 
 		self.ui.tb_DataFrame.cellChanged.connect(self.OnCellChanged)
 		self.ui.tb_DataFrame.cellActivated.connect(self.OnCellSelected)
@@ -115,7 +115,9 @@ class DataTable(QWidget):
 		self.ui.tb_DataFrame.setRowCount(n_row+EMPTY_ROWS)
 
 		# Update headers
-		self.ui.tb_DataFrame.setHorizontalHeaderLabels(list(df.columns))
+		_col_labels = list(df.columns)
+		printYellow(_col_labels)
+		self.ui.tb_DataFrame.setHorizontalHeaderLabels(_col_labels)
 
 		# Populate grid row by row
 		for ii in range(len(df)):
@@ -156,6 +158,7 @@ class DataTable(QWidget):
 			_col_header_labels.insert(col, text) # Add new variable 
 			self.ui.tb_DataFrame.setHorizontalHeaderLabels(_col_header_labels)
 			self.col_header = _col_header_labels
+			self.exp.add_col(col, text)
 		return
 	@Slot()
 	def OnReanalyze(self):
