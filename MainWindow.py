@@ -3,6 +3,7 @@
 import sys, time, glob, shutil, math, pickle
 import threading
 from PySide2.QtWidgets import QPushButton, QApplication, QMainWindow, QWidget, QMdiSubWindow, QTextEdit, QShortcut, QFileDialog
+from PySide2.QtWidgets import QStyleFactory
 from PySide2.QtCore import QFile, Slot, Qt, QObject, Signal, QPoint, QRect
 from PySide2.QtCore import QThread, QThreadPool, QRunnable
 from PySide2.QtGui import QKeySequence, QIcon
@@ -116,7 +117,7 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.setWindowIcon(QIcon('icons/main.png'))
+        self.setWindowIcon(QIcon('icons/main.ico'))
 
         # Setup status bar. Cannot do this in the Designer. 
         self.btn_idle = QPushButton("Record", self)
@@ -231,17 +232,17 @@ class MainWindow(QMainWindow):
     def OnTileWindows(self):
         top_row_height = 400
         # Position table window
-        _ract = QRect(0., 0., 800, top_row_height)
+        _ract = QRect(0., 0., 1200, top_row_height)
         self.DataTableWindow.setGeometry(_ract)
         self.DataTableWindow.move(0, 0)
         # Positon parameter window
         _ract = QRect(0., 0., 250, top_row_height)
         self.ParameterWindow.setGeometry(_ract)
-        self.ParameterWindow.move(800, 0)
+        self.ParameterWindow.move(1200, 0)
         # Position Note window
-        _ract = QRect(0., 0., 500, top_row_height)
+        _ract = QRect(0., 0., 400, top_row_height)
         self.NotesWindow.setGeometry(_ract)
-        self.NotesWindow.move(1050, 0)
+        self.NotesWindow.move(1450, 0)
         # Tile figure windwos
         _win_size = self.ui.mdiArea.width()/4.
         for ii, _name in enumerate(self.FigureWindows.keys()):
@@ -333,17 +334,18 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     if os.name == 'nt':
         from os import system
-        system("title "+"Experiment Note")
+        system("title "+"Experiment Note Atom Cloud")
     else:
         print('\33]0;Experiment Note\a', end='', flush=True)
 
     # These are few lines of magic code to not let the windows group the task bar icons
     if os.name == 'nt':
         import ctypes
-        myappid = u'fermi2.ExperimentControl.ExperimentNote.1.0' # arbitrary string
+        myappid = u'fermi2.ExperimentControl.ExperimentNote.1.0.AtomCloud' # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')
     window = MainWindow(Experiment())
     window.show()
     sys.exit(app.exec_())

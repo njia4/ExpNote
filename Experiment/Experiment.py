@@ -106,7 +106,7 @@ class Experiment:
 	def set_parameters(self, data):
 		for key in data.keys():
 			try:
-				self.analysis_parameters[key] = float(data[key])
+				self.analysis_parameters[key] = eval(data[key])
 			except:
 				self.analysis_parameters[key] = data[key]
 			console_print('Experiment', 'Parameter update: ({} = {})'.format(key, data[key]))
