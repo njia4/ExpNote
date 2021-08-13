@@ -41,7 +41,6 @@ class FileThread(QThread):
 
     def set_experiment(self, exp):
         self.exp = exp
-
     def set_save(self, save):
         self.save_flg = save
         console_print('File Thread', "Record {}".format(self.save_flg))
@@ -68,11 +67,10 @@ class FileThread(QThread):
                   dst_dir = os.path.join(generate_dir(self.exp.name, self.exp.dt), "Data")
                   dst = os.path.join(dst_dir, file_name)
                   if not os.path.exists(dst_dir):
-                      os.makedirs(dst_dir)
+                    os.makedirs(dst_dir)
                   
                   if not os.access(src, os.W_OK): # Check if other software has finish writing the file
                     continue
-                  
                   shutil.move(src, dst)
 
                   if not self.save_flg:
@@ -82,7 +80,7 @@ class FileThread(QThread):
                   # Run analysis script
                   console_print('File Thread', "New data file: {}".format(file_name))
                   data_id = self.exp.do_analyze(dst)
-                  if data_id != 0:
+                  if data_id >= 0:
                     self.signals.result.emit(data_id)
 
             time.sleep(FILECHECK_FREQUENCY)
@@ -132,7 +130,7 @@ class MainWindow(QMainWindow):
         self.exp = exp
         self.threadpool = QThreadPool()
 
-        # Setup the windows
+        # Setup the GUI windows
         self.showMaximized()
         self.set_windows()
         self.OnTileWindows()
@@ -299,6 +297,7 @@ class MainWindow(QMainWindow):
             self.set_windows()
     @Slot()
     def OnReloadScript(self):
+        # Load from data folder instead of script folder
         _script = os.path.join(self.exp.script_dir, self.exp.script_filename)
         _params = self.exp.get_parameters() # Preserve the parameters when reload
         self.exp.set_analysis_script(_script)
@@ -308,8 +307,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def OnRecord(self):
-        # TODO: CHECK IF FILE THREAD HAS CRASHED. IF SO, CREATE A NEW ONE AND DELETE FILES IN THE FOLDER FIRST. 
         _status = self.btn_idle.isChecked()
+        if self.file_thread == None: # Restart the file thread if it crashed
+            self.start_file_thread()
         self.file_thread.set_save(_status)
         if _status:
             self.btn_idle.setStyleSheet("background-color : green")
@@ -320,7 +320,6 @@ class MainWindow(QMainWindow):
     @Slot(int)
     def add_result(self, data_id):
         self.data_table.add_run(data_id)
-        # self.update_figures()
         self.replot()
 
     @Slot()

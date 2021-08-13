@@ -6,7 +6,7 @@ import pandas as pd
 import glob, os, shutil, datetime, time
 import pickle
 from .script_parser import script_parser
-from config import *
+from config import * # Check if this is necessary
 from utilities import *
 
 import sys
@@ -41,7 +41,7 @@ class Figure:
 			return 0
 		return 1
 
-DF_INIT_DATA = {'id': [np.nan], 'Run Name': [np.nan], 'Valid': [1], 'Data Note': ''}
+DF_INIT_DATA = {'Run Name': [np.nan], 'Valid': [1], 'Data Note': ''}
 DF_INIT_COLUMNS = ['Run Name', 'Valid', 'Data Note']
 EXP_DEFAULT_NAME = 'Archive'
 EXP_DEFAULT_DF = pd.DataFrame(columns=DF_INIT_DATA)
@@ -54,7 +54,7 @@ class Experiment:
 
 		self.df = df.copy() # Have to use copy() to get the namespace correct
 		self.columns = []
-		self.data_id = len(self.df)
+		self.data_id = len(df['Run Name'].dropna())
 		self.figs = {}
 		
 		self.script_dir = ''
@@ -75,13 +75,16 @@ class Experiment:
 		console_print('Experiment', 'Send experiment ("{}") info.'.format(self.name))
 		exp_info = {'name': self.name, 'description': self.description, 'script_dir': self.script_dir, 'script': self.script_filename}
 		return exp_info
-	def get_row(self, run_id):
-		return self.df.iloc[run_id-1]
+	def get_row(self, row_ind):
+		if row_ind in self.df.index: # Check if row exist, otherwise return None
+			return self.df.loc[row_ind]
+		else:
+			return pd.Series() # Return empty series if the row is not in the DataFrame
 	def get_df(self):
 		console_print('Experiment', 'Sending data table!')
-		_df = self.df
+		_df = self.df.sort_index() # Sort according to index
 		_df = _df.fillna('null') # For working with Javascript. 
-		payload = _df.to_dict('index')
+		payload = _df.to_dict('index') # Sending a dictionary so it will be compatible for JSON in the future
 		return payload, len(self.df)
 	def get_parameters(self):
 		console_print('Experiment', 'Send script parameters. ({} items)'.format(len(self.analysis_parameters)))
@@ -91,25 +94,26 @@ class Experiment:
 		return self.figs
 
 	def add_col(self, col_index, name):
+		# Add an empty column for new a variable
 		self.df.insert(col_index, name, pd.Series())
 
 	def set_exp_info(self, msg):
 		self.name = msg['name'] # TODO: DEAL WITH SAVING DIRECTORY
 		self.description = msg['description']
 	def set_cell(self, row, col, val):
-		# console_print('Experiment', 'Update cell (row: {}, col: {}, val: {})'.format(row, col, val))
+		console_print('Experiment', 'Update cell (row: {}, col: {}, val: {})'.format(row, col, val))
 		
 		# Panda is using indexing instead of rwo number. If some variable is set before the data come in, 
 		# it will mess up the order. So append some empty rows before assigning
 		# TODO: MAYBE MAKE BETTER USE OF THE PANDA INDEXING SYSTEM. 
 		# FOR EXAMPLE DIRECTLY CALL AND SET USING THE INDEX AND SORT BEFORE SAVING?
-		if row >= len(self.df):
-			_counter = row-len(self.df)
-			for ii in range(_counter):
-				self.df = self.df.append(pd.Series(), ignore_index=True)
+		# if row >= len(self.df):
+		# 	_counter = row-len(self.df)
+		# 	for ii in range(_counter):
+		# 		self.df = self.df.append(pd.Series(), ignore_index=True)
 
 		try:
-			_v = float(val)
+			_v = float(val) # Try to convert the value to float when possible
 		except:
 			_v = val
 		self.df.at[row, col] = _v
@@ -166,7 +170,7 @@ class Experiment:
 	def save_df(self):
 		console_print('Experiment', 'Saving data table!')
 		df_file = os.path.join(generate_dir(self.name, self.dt), self.name+'.csv')
-		self.df.to_csv(df_file, index=False)
+		self.df.sort_index().to_csv(df_file, index=False)
 		return
 	def save(self):
 		self.save_info()
@@ -177,16 +181,20 @@ class Experiment:
 
 	def add_run(self, data_dict):
 		# TODO: MAYBE NOT USING APPEND BUT RATHER CALL THE INDEX TO MAKE THINGS CONSISTENT
-		if self.data_id == len(self.df):
-			_df_header = self.df.columns.tolist()
-			_col_header = [_key for _key in data_dict.keys() if _key not in _df_header]
-			# if 'id' in data_dict.keys(): _col_header.remove('id')
-			self.df = self.df.append(data_dict, ignore_index=True)
-			if len(_col_header) > 0:
-				self.df = self.df[_df_header+_col_header]
-		else:
-			for key in data_dict.keys():
-				self.df.loc[self.data_id, key] = data_dict[key]
+		# if self.data_id == len(self.df):
+		# 	_df_header = self.df.columns.tolist()
+		# 	_col_header = [_key for _key in data_dict.keys() if _key not in _df_header]
+		# 	# if 'id' in data_dict.keys(): _col_header.remove('id')
+		# 	self.df = self.df.append(data_dict, ignore_index=True)
+		# 	if len(_col_header) > 0:
+		# 		self.df = self.df[_df_header+_col_header]
+		# else:
+		# 	for key in data_dict.keys():
+		# 		self.df.loc[self.data_id, key] = data_dict[key]
+
+		# Cannot assign row with a pd.Series since it will remove user set values not in the data_dict
+		for key in data_dict.keys():
+			self.df.loc[self.data_id, key] = data_dict[key]
 		data_dict = {key: render_numeric_value(val) for key, val in data_dict.items()}
 		self.data_id += 1
 
@@ -197,27 +205,28 @@ class Experiment:
 			self.figs[key].update_plot()
 
 	def do_analyze(self, fname):
+		# Setup the analysis namespace
 		self.analysis_namespace['data_file'] = fname
-		self.analysis_namespace['result'] = pd.Series({'id': int(self.data_id), 'Run Name': os.path.split(fname)[-1]})
+		self.analysis_namespace['result'] = pd.Series({'Run Name': os.path.split(fname)[-1]})
 		self.analysis_namespace['data_dir'] = os.path.join(generate_dir(self.name, self.dt), 'Data')
 		self.analysis_namespace.update(self.analysis_parameters)
+		
+		# Execute the analysis script
 		try:
 			exec(self.analysis_script, self.analysis_namespace)
-			# printYellow(self.analysis_namespace)
+			console_print('Analysis', 'Finished running the analysis script.')
 		except Exception as e:
 			console_print('Analysis', 'Failed to run the analysis script.', method='error')
 			if hasattr(e, 'message'):
 				print(e.massage)
 			else:
 				print(e)
-			# return 0
 
 		# Complete analysis result with more meta-data
-		result = self.analysis_namespace['result']
-		self.add_run(result) # Add result to the DataFrame
+		self.add_run(self.analysis_namespace['result']) # Add result to the DataFrame
 		self.update_figure() # Update plots. This is probably ok since it is in the WorkerThread already. 
 
-		return int(self.data_id)
+		return int(self.data_id-1) # The add_run function will increment the run index, so the current one is data_id-1
 
 def load_exp(filename):
 	exp_dir = os.path.split(filename)[0]
@@ -235,3 +244,8 @@ def load_exp(filename):
 
 		exp = Experiment(name=exp_name, df=exp_df, script=os.path.join(exp_dir, exp_script))
 	return exp
+
+
+
+
+

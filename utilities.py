@@ -132,9 +132,9 @@ def render_numeric_value(value):
     exp = np.floor(np.log10(np.abs(num))/3.)
 
     if exp == 0:
-      return sgn+"{:.2f}".format(num)
+      return sgn+"{:.5f}".format(num)
     else:
-      return sgn+"{:.2f}e{:d}".format(num/(10**(3*exp)), int(3*exp))
+      return sgn+"{:.5f}e{:d}".format(num/(10**(3*exp)), int(3*exp))
 
   except:
     return str(value)

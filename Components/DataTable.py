@@ -24,7 +24,7 @@ class DataTable(QWidget):
 
 		self.backend_writing = False
 		
-		self.populate_tabel(self.exp.df.drop(columns='id'))
+		self.populate_tabel(self.exp.df) # TODO: USE get_df
 
 		self.ui.tb_DataFrame.cellChanged.connect(self.OnCellChanged)
 		self.ui.tb_DataFrame.cellActivated.connect(self.OnCellSelected)
@@ -83,19 +83,19 @@ class DataTable(QWidget):
 			return
 	
 	def add_run(self, data_id):
-		self.ui.tb_DataFrame.blockSignals(True) # Turn off edit event
-		data = self.exp.get_row(data_id)
-		for _key in data.keys():
-			if _key == 'id':
-				continue
-			if not _key in self.col_header:
-				_col_header_labels = self.get_col_header_labels()
+		self.ui.tb_DataFrame.blockSignals(True) # Turn off edit event to prevent loop trigger
+		
+		data = self.exp.get_row(data_id) # Retrieve data from the Experiment
+		
+		for _key in data.keys(): # Write data into the table
+			if not _key in self.col_header: # Add column if it is not in the table
+				_col_header_labels = self.get_col_header_labels() # Current column header
 				_col_header_labels.append(_key) # Add new variable
-				self._add_col()
+				self._add_col() # TODO: ADD COLUMN TO SPECIFIC INDEX. NOT ALWAYS AT THE END
 				self.ui.tb_DataFrame.setHorizontalHeaderLabels(_col_header_labels)
 				self.col_header = _col_header_labels
 
-			_row = data_id-1
+			_row = data_id
 			_col = self.col_header.index(_key)
 			# _item = QTableWidgetItem(str(data[_key]))
 			_item = QTableWidgetItem(render_numeric_value(data[_key]))
@@ -103,6 +103,7 @@ class DataTable(QWidget):
 
 		self.ui.tb_DataFrame.blockSignals(False)
 
+		# Add more empty rows at the bottom
 		_empty_rows = self.ui.tb_DataFrame.rowCount() - data_id
 		if _empty_rows < EMPTY_ROWS:
 			for ii in range(EMPTY_ROWS-_empty_rows+1):
@@ -116,7 +117,6 @@ class DataTable(QWidget):
 
 		# Update headers
 		_col_labels = list(df.columns)
-		printYellow(_col_labels)
 		self.ui.tb_DataFrame.setHorizontalHeaderLabels(_col_labels)
 
 		# Populate grid row by row
