@@ -7,6 +7,7 @@ from PySide2.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
 from PySide2.QtWidgets import *
 from Experiment import Experiment
 from PySide2 import QtGui
+from utilities import *
 
 class PlotSignal(QObject):
 	plot = Signal()
@@ -37,7 +38,7 @@ class Parameter(QWidget):
 				_val.setObjectName(_key)
 				for _item in param_dict[_key]:
 					_val.addItem(_item)
-				_val.activated[str].connect(self.OnChangeSelection)	
+				_val.activated[str].connect(self.OnChangeSelection)
 			else:
 				_val = QLineEdit()
 				_val.setObjectName(_key)
@@ -51,6 +52,27 @@ class Parameter(QWidget):
 		layout.addItem(verticalSpacer)
 		self.setLayout(layout)
 		self.show()
+
+	def set_parameters(self, param_dict):
+		for _widget in self.findChildren(QComboBox):
+			try:
+				_items = [_widget.itemText(ii) for ii in range(_widget.count())]
+				_widget.setCurrentIndex(_items.index(param_dict[_widget.objectName()]))
+			except:
+				console_print('Parameter', 'Failed to set the value of parameter "{}"'.format(_widget.objectName()))
+				continue
+
+		for _widget in self.findChildren(QLineEdit):
+			try:
+				_widget.setText(str(param_dict[_widget.objectName()]))
+			except:
+				console_print('Parameter', 'Failed to set the value of parameter "{}"'.format(_widget.objectName()))
+				continue
+
+		# The code above only change the values on the GUI. It doesn't trigger the change event. 
+		# The value in the Experiment class which is used to do the analysis hasn't been changed yet. 
+		# Have to manually assign the value by the following line. 
+		self.exp.set_parameters(_param_dict)
 
 	def OnChangeParameter(self):
 		_param_dict = {self.sender().objectName(): self.sender().text()}

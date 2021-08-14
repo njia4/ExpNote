@@ -51,13 +51,14 @@ class Experiment:
 		self.name = name
 		self.description = ''
 		self.dt = datetime.datetime.now()
+		self.exp_dir = generate_dir(self.name, self.dt)
 
 		self.df = df.copy() # Have to use copy() to get the namespace correct
 		self.columns = []
 		self.data_id = len(df['Run Name'].dropna())
 		self.figs = {}
 		
-		self.script_dir = ''
+		self.script_dir = '' # Original directory of the script file
 		self.script_filename = ''
 		self.static = ''
 		self.analysis_parameters = {}
@@ -152,6 +153,8 @@ class Experiment:
 		self.figs = {} # Clear old figures
 		for name, code in plots_code.items():
 			self.add_figure(name, code)
+
+		return 1
 	def set_figures(self):
 		# for name, code in plots_code.items():
 		# 	self.add_figure(name, code)
@@ -164,7 +167,7 @@ class Experiment:
 		info_txt += 'Analysis script: {}\n'.format(self.script_filename)
 		info_txt += 'Description: \n'
 		info_txt += self.description
-		info_filename = os.path.join(generate_dir(self.name, self.dt), 'info.txt')
+		info_filename = os.path.join(generate_dir(self.name, self.dt), '{}.info'.format(self.name))
 		with open(info_filename, 'w') as file:
 			file.write(info_txt)
 	def save_df(self):
@@ -210,6 +213,8 @@ class Experiment:
 		self.analysis_namespace['result'] = pd.Series({'Run Name': os.path.split(fname)[-1]})
 		self.analysis_namespace['data_dir'] = os.path.join(generate_dir(self.name, self.dt), 'Data')
 		self.analysis_namespace.update(self.analysis_parameters)
+
+		self.analysis_namespace['print'] = print
 		
 		# Execute the analysis script
 		try:
@@ -230,11 +235,9 @@ class Experiment:
 
 def load_exp(filename):
 	exp_dir = os.path.split(filename)[0]
-	print(exp_dir)
 	with open(filename, 'r') as info_file:
 		exp_name   = info_file.readline().split(':')[-1].strip()
 		exp_script = info_file.readline().split(':')[-1].strip()
-		printYellow(exp_script)
 		exp_info   = ''.join(info_file.readlines()[1:])
 		print(exp_info)
 		try:

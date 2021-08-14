@@ -45,6 +45,15 @@
        <property name="columnCount">
         <number>5</number>
        </property>
+       <attribute name="horizontalHeaderVisible">
+        <bool>true</bool>
+       </attribute>
+       <attribute name="horizontalHeaderDefaultSectionSize">
+        <number>80</number>
+       </attribute>
+       <attribute name="horizontalHeaderHighlightSections">
+        <bool>true</bool>
+       </attribute>
        <attribute name="verticalHeaderDefaultSectionSize">
         <number>20</number>
        </attribute>

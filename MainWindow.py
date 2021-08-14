@@ -131,9 +131,8 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool()
 
         # Setup the GUI windows
-        self.showMaximized()
+        # self.showMaximized()
         self.set_windows()
-        self.OnTileWindows()
 
         # Menu bar function binding
         self.ui.actionNew.triggered.connect(self.OnNewExperiment)
@@ -154,7 +153,7 @@ class MainWindow(QMainWindow):
         self.start_file_thread()
         self.start_plot_thread()
 
-        # self.showMaximized()
+        self.showMaximized() # Open the application in full screen mode
         self.show()
 
     def set_table_win(self):
@@ -232,27 +231,33 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def OnTileWindows(self):
-        top_row_height = 400
+        _win_width = self.ui.mdiArea.width() # Window width
+
+        top_row_height = 450
+        _table_win_width = max(1200, _win_width*0.65)
+        _param_win_width = 3./7.*(_win_width-_table_win_width)
+        _notes_win_width = (_win_width-_table_win_width-_param_win_width)
         # Position table window
-        _ract = QRect(0., 0., 1200, top_row_height)
+        _ract = QRect(0., 0., _table_win_width, top_row_height)
         self.DataTableWindow.setGeometry(_ract)
         self.DataTableWindow.move(0, 0)
         # Positon parameter window
-        _ract = QRect(0., 0., 250, top_row_height)
+        _ract = QRect(0., 0., _param_win_width, top_row_height)
         self.ParameterWindow.setGeometry(_ract)
-        self.ParameterWindow.move(1200, 0)
+        self.ParameterWindow.move(_table_win_width, 0)
         # Position Note window
-        _ract = QRect(0., 0., 400, top_row_height)
+        _ract = QRect(0., 0., _notes_win_width, top_row_height)
         self.NotesWindow.setGeometry(_ract)
-        self.NotesWindow.move(1450, 0)
+        self.NotesWindow.move(_table_win_width+_param_win_width, 0)
+        
         # Tile figure windwos
-        _win_size = self.ui.mdiArea.width()/4.
+        _fig_win_size = _win_width/4.
         for ii, _name in enumerate(self.FigureWindows.keys()):
             x_shift = ii%4
             y_shift = math.floor(ii/4)
-            _rect = QRect(0., 0., _win_size, _win_size)
+            _rect = QRect(0., 0., _fig_win_size, _fig_win_size)
             self.FigureWindows[_name].setGeometry(_rect)
-            self.FigureWindows[_name].move(_win_size*x_shift, _win_size*y_shift+top_row_height)
+            self.FigureWindows[_name].move(_fig_win_size*x_shift, _fig_win_size*y_shift+top_row_height)
     @Slot()
     def OnShowWindows(self):
         self.refresh_windows()
@@ -276,8 +281,10 @@ class MainWindow(QMainWindow):
     @Slot()
     def OnOpenExperiment(self):
         dlg = QFileDialog()
+        dlg.setNameFilter("Experiment (*.info)")
         if dlg.exec_():
             dirname = dlg.selectedFiles()[0]
+            dirname = dirname.replace('/', '\\') # Convert to Windows path. Maybe use pathlib in the future
             exp = load_exp(dirname)
             self.exp = exp
             self.file_thread.set_experiment(self.exp)
@@ -290,20 +297,28 @@ class MainWindow(QMainWindow):
     @Slot()
     def OnLoadScript(self):
         dlg = QFileDialog()
+        dlg.setNameFilter("Script (*.ipynb)")
         if dlg.exec_():
             _script = dlg.selectedFiles()[0]
             self.exp.set_analysis_script(_script)
             self.clear_windows()
             self.set_windows()
+
     @Slot()
     def OnReloadScript(self):
         # Load from data folder instead of script folder
-        _script = os.path.join(self.exp.script_dir, self.exp.script_filename)
+        _script = os.path.join(self.exp.exp_dir, self.exp.script_filename)
+        if self.exp.script_filename.strip() == '':
+            console_print('Main Window', 'Unknown scrit file! Use "Load Script" in the "Analysis" Menu.'.format(_script), method='error')
+            return
+        if not os.path.exists(_script):
+            console_print('Main Window', 'Script ({}) doesn\'t exist!'.format(_script))
+            return
         _params = self.exp.get_parameters() # Preserve the parameters when reload
         self.exp.set_analysis_script(_script)
-        self.exp.set_parameters(_params) # Set to current parameters
         self.clear_windows()
         self.set_windows()
+        self.analysis_parameters.set_parameters(_params) # Set to current parameters
 
     @Slot()
     def OnRecord(self):

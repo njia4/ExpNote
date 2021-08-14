@@ -17,7 +17,7 @@ class DataTable(QWidget):
 		self.parent = parent
 		self.ui = Ui_DataTable()
 		self.ui.setupUi(self)
-		self.setWindowTitle('Data Table')
+		self.setWindowTitle('Data Table ({})'.format(exp.name))
 
 		self.exp = exp
 		self.col_header = list(self.exp.df.columns)
@@ -121,7 +121,7 @@ class DataTable(QWidget):
 
 		# Populate grid row by row
 		for ii in range(len(df)):
-			self.add_run(ii+1)
+			self.add_run(ii)
 		return
 
 	@Slot()

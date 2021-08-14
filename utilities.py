@@ -96,7 +96,7 @@ def printGrayDate(msg):
   return str(matchObj.group(2))
 
 def console_print(header, msg, method='normal'):
-  msg_str = datetime.datetime.now().strftime("[{} %Y-%m-%dT%H:%M:%S] {}".format(header, msg))
+  msg_str = datetime.datetime.now().strftime("[%Y-%m-%dT%H:%M:%S {}] {}".format(header, msg))
   if method == 'normal':
     printGreen(msg_str)
   elif method == 'error':
