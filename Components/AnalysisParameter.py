@@ -38,7 +38,8 @@ class Parameter(QWidget):
 				_val.setObjectName(_key)
 				for _item in param_dict[_key]:
 					_val.addItem(_item)
-				_val.activated[str].connect(self.OnChangeSelection)
+				# _val.activated[str].connect(self.OnChangeSelection)
+				_val.currentTextChanged.connect(self.OnChangeSelection)
 			else:
 				_val = QLineEdit()
 				_val.setObjectName(_key)
@@ -72,7 +73,7 @@ class Parameter(QWidget):
 		# The code above only change the values on the GUI. It doesn't trigger the change event. 
 		# The value in the Experiment class which is used to do the analysis hasn't been changed yet. 
 		# Have to manually assign the value by the following line. 
-		self.exp.set_parameters(_param_dict)
+		# self.exp.set_parameters(_param_dict)
 
 	def OnChangeParameter(self):
 		_param_dict = {self.sender().objectName(): self.sender().text()}
