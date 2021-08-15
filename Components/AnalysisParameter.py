@@ -85,5 +85,6 @@ class Parameter(QWidget):
 	def OnChangeSelection(self, text):
 		_param_dict = {self.sender().objectName(): text}
 		self.exp.set_parameters(_param_dict)
-		self.exp.update_figure()
+		# self.exp.update_figure()
 		# self.parent.update_figures()
+		self.signals.plot.emit()
