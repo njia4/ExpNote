@@ -1,4 +1,4 @@
-```sh
+```shell
 conda create -name [ENVIROMENT NAME]
 conda activate [ENVIROMENT NAME]
 conda install python=3.8.5
